@@ -114,6 +114,15 @@ class TaskResponse(BaseModel):
     executed: bool
 
 
+class NotificationResponse(BaseModel):
+    """Notification response model."""
+    event_type: str
+    device_id: str
+    message: str
+    data: Dict[str, Any]
+    timestamp: str
+
+
 # Helper functions
 def get_user_from_session(session_id: str) -> Optional[User]:
     """Get user from session ID."""
@@ -532,6 +541,30 @@ async def cancel_scheduled_task(task_id: str, session_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to cancel task: {str(e)}"
+        )
+
+
+# Notification Endpoints
+@app.get("/notifications", response_model=List[NotificationResponse], tags=["Notifications"])
+async def get_notifications(session_id: str, limit: int = 10):
+    """Get recent notifications."""
+    try:
+        user = get_user_from_session(session_id)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid session. Please login."
+            )
+
+        notifications = notification_service.get_notifications(limit)
+        return notifications
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve notifications: {str(e)}"
         )
 
 
