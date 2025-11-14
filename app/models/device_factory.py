@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from .device import Device, Light, Thermostat, SecurityCamera
+from app.models.device import Device, Light, Thermostat, SecurityCamera
 import uuid
 
 

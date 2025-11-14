@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:8000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -151,6 +151,23 @@ export const schedulerAPI = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { detail: 'Failed to cancel task' };
+    }
+  },
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getNotifications: async (limit = 20) => {
+    try {
+      const response = await api.get('/notifications', {
+        params: { 
+          session_id: sessionId,
+          limit: limit
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch notifications' };
     }
   },
 };
