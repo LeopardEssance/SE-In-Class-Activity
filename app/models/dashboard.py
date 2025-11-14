@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from models.device import Device
+from .device import Device
 
 
 class Dashboard:

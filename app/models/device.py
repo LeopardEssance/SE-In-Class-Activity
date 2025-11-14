@@ -63,44 +63,27 @@ class Device(ABC):
         }
 
 
+# Device child classes
 class Light(Device):
     """Light device with brightness control."""
 
     def __init__(self, device_id: str, device_name: str):
-        """
-        Initialize a light device.
-
-        Args:
-            device_id: Unique identifier for the light
-            device_name: Human-readable name for the light
-        """
         super().__init__(device_id, device_name, "light")
         self.brightness: int = 0
         self.is_on: bool = False
 
     def turn_on(self) -> None:
-        """Turn the light on and set default brightness."""
         super().turn_on()
         self.is_on = True
         if self.brightness == 0:
             self.brightness = 100
 
     def turn_off(self) -> None:
-        """Turn the light off."""
         super().turn_off()
         self.is_on = False
         self.brightness = 0
 
     def set_brightness(self, level: int) -> bool:
-        """
-        Set the brightness level of the light.
-
-        Args:
-            level: Brightness level (0-100)
-
-        Returns:
-            bool: True if successful, False if invalid level
-        """
         if 0 <= level <= 100:
             self.brightness = level
             if level > 0:
@@ -113,21 +96,9 @@ class Light(Device):
         return False
 
     def get_brightness(self) -> int:
-        """
-        Get the current brightness level.
-
-        Returns:
-            int: Current brightness (0-100)
-        """
         return self.brightness
 
     def toggle(self) -> bool:
-        """
-        Toggle the light on/off state.
-
-        Returns:
-            bool: New state (True=on, False=off)
-        """
         if self.is_on:
             self.turn_off()
         else:
@@ -135,15 +106,74 @@ class Light(Device):
         return self.is_on
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert light to dictionary representation.
-
-        Returns:
-            Dict containing light data including brightness
-        """
         base_dict = super().to_dict()
         base_dict.update({
             "brightness": self.brightness,
             "is_on": self.is_on
         })
         return base_dict
+
+
+class Thermostat(Device):
+    """Thermostat device for temperature control."""
+
+    def __init__(self, device_id: str, device_name: str):
+        super().__init__(device_id, device_name, "thermostat")
+        self.temperature: float = 20.0
+        self.target_temperature: float = 22.0
+
+    def set_temperature(self, temp: float) -> bool:
+        if 10.0 <= temp <= 35.0:
+            self.target_temperature = temp
+            return True
+        return False
+
+    def to_dict(self) -> Dict[str, Any]:
+        base_dict = super().to_dict()
+        base_dict.update({
+            "temperature": self.temperature,
+            "target_temperature": self.target_temperature
+        })
+        return base_dict
+
+
+class SecurityCamera(Device):
+    """Security camera device."""
+
+    def __init__(self, device_id: str, device_name: str = "Security Camera", resolution: str = "1080p"):
+        super().__init__(device_id, device_name, device_type="security_camera")
+        self.recording: bool = False
+        self.resolution: str = resolution
+
+    def start_recording(self) -> None:
+        if self.status != "on":
+            return
+        if self.recording:
+            return
+        self.recording = True
+        self.status = "recording"
+
+    def stop_recording(self) -> None:
+        if not self.recording:
+            return
+        self.recording = False
+        self.status = "on"
+
+    def capture_image(self) -> Optional[str]:
+        if self.status != "on" and self.status != "recording":
+            return None
+        image_filename = f"{self.device_id}_capture.jpg"
+        return image_filename
+
+    def get_status(self) -> str:
+        base_status = super().get_status()
+        recording_status = "recording" if self.recording else "not recording"
+        return f"{base_status}, {recording_status}, resolution: {self.resolution}"
+
+    def to_dict(self) -> Dict[str, Any]:
+        base = super().to_dict()
+        base.update({
+            "recording": self.recording,
+            "resolution": self.resolution
+        })
+        return base
