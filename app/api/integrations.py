@@ -3,6 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 from app.models.integrations import IntegrationsService
+from app.api.storage import notification_service
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
@@ -43,6 +44,14 @@ def create_integration(request: IntegrationCreate):
         features=request.features,
         commands=request.commands
     )
+    
+    # Send notification
+    notification_service.send_notification(
+        f"Integration '{integration.name}' has been created",
+        integration.name,
+        "integration_created"
+    )
+    
     return IntegrationResponse(
         name=integration.name,
         status=integration.status,
@@ -106,6 +115,14 @@ def activate_integration(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     integration = integrations_service.get_integration(name)
+    
+    # Send notification
+    notification_service.send_notification(
+        f"Integration '{integration.name}' has been activated",
+        integration.name,
+        "integration_activated"
+    )
+    
     return IntegrationResponse(
         name=integration.name,
         status=integration.status,
@@ -124,6 +141,14 @@ def deactivate_integration(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     integration = integrations_service.get_integration(name)
+    
+    # Send notification
+    notification_service.send_notification(
+        f"Integration '{integration.name}' has been deactivated",
+        integration.name,
+        "integration_deactivated"
+    )
+    
     return IntegrationResponse(
         name=integration.name,
         status=integration.status,
@@ -142,6 +167,15 @@ def toggle_integration(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     integration = integrations_service.get_integration(name)
+    
+    # Send notification
+    connection_status = "connected" if integration.connected else "disconnected"
+    notification_service.send_notification(
+        f"Integration '{integration.name}' has been {connection_status}",
+        integration.name,
+        "integration_toggled"
+    )
+    
     return IntegrationResponse(
         name=integration.name,
         status=integration.status,
@@ -174,5 +208,13 @@ def add_integration_skill(name: str, request: SkillRequest):
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     if request.skill not in integration.skills:
         integration.skills.append(request.skill)
+        
+        # Send notification
+        notification_service.send_notification(
+            f"Skill '{request.skill}' added to integration '{name}'",
+            name,
+            "skill_added"
+        )
+    
     return {"message": f"Skill '{request.skill}' added to {name}"}
 
