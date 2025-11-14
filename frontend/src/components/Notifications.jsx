@@ -46,6 +46,16 @@ function Notifications({ isVisible }) {
         return '💡';
       case 'task_scheduled':
         return '⏰';
+      case 'integration_created':
+        return '🔌';
+      case 'integration_toggled':
+        return '🔗';
+      case 'integration_activated':
+        return '✅';
+      case 'integration_deactivated':
+        return '❌';
+      case 'skill_added':
+        return '🎯';
       default:
         return '📢';
     }

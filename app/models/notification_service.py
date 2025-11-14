@@ -60,6 +60,7 @@ class NotificationService:
         """Initialize the notification service."""
         self.subscribers: List[Observer] = []
         self.notifications: Queue = Queue()
+        self.notification_history: List[Event] = []  # Store all notifications
 
     def subscribe(self, observer: Observer) -> None:
         """
@@ -94,6 +95,7 @@ class NotificationService:
             event: Event to notify subscribers about
         """
         self.notifications.put(event)
+        self.notification_history.append(event)  # Keep in history
         for subscriber in self.subscribers:
             subscriber.update(event)
 
@@ -108,6 +110,7 @@ class NotificationService:
         """
         event = Event(event_type, device_id, message)
         self.notifications.put(event)
+        self.notification_history.append(event)  # Keep in history
 
     def get_notifications(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -117,18 +120,12 @@ class NotificationService:
             limit: Maximum number of notifications to return
 
         Returns:
-            List of notification dictionaries
+            List of notification dictionaries (most recent first)
         """
-        notifications = []
-        count = 0
-
-        while not self.notifications.empty() and count < limit:
-            notification = self.notifications.get()
-            if isinstance(notification, Event):
-                notifications.append(notification.to_dict())
-            elif isinstance(notification, str):
-                notifications.append({"message": notification, "timestamp": datetime.now().isoformat()})
-            count += 1
-
-        return notifications
+        # Return the most recent notifications from history
+        recent_notifications = self.notification_history[-limit:] if len(self.notification_history) > limit else self.notification_history
+        # Reverse to show newest first
+        recent_notifications = list(reversed(recent_notifications))
+        
+        return [notification.to_dict() for notification in recent_notifications if isinstance(notification, Event)]
 
