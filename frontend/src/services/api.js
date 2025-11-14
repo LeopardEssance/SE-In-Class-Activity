@@ -172,4 +172,88 @@ export const notificationsAPI = {
   },
 };
 
+// Integrations API
+export const integrationsAPI = {
+  getIntegrations: async () => {
+    try {
+      const response = await api.get('/integrations');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch integrations' };
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await api.get('/integrations/stats');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch integration stats' };
+    }
+  },
+
+  getIntegration: async (name) => {
+    try {
+      const response = await api.get(`/integrations/${name}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch integration' };
+    }
+  },
+
+  createIntegration: async (integration) => {
+    try {
+      const response = await api.post('/integrations', integration);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to create integration' };
+    }
+  },
+
+  toggleIntegration: async (name) => {
+    try {
+      const response = await api.post(`/integrations/${name}/toggle`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to toggle integration' };
+    }
+  },
+
+  activateIntegration: async (name) => {
+    try {
+      const response = await api.post(`/integrations/${name}/activate`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to activate integration' };
+    }
+  },
+
+  deactivateIntegration: async (name) => {
+    try {
+      const response = await api.post(`/integrations/${name}/deactivate`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to deactivate integration' };
+    }
+  },
+
+  getSkills: async (name) => {
+    try {
+      const response = await api.get(`/integrations/${name}/skills`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch skills' };
+    }
+  },
+
+  addSkill: async (name, skill) => {
+    try {
+      const response = await api.post(`/integrations/${name}/skills`, { skill });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to add skill' };
+    }
+  },
+};
+
 export default api;

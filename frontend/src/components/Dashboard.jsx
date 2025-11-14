@@ -4,6 +4,7 @@ import DeviceCard from './DeviceCard';
 import LightControl from './LightControl';
 import Scheduler from './Scheduler';
 import Notifications from './Notifications';
+import Integrations from './Integrations';
 import '../styles/Dashboard.css';
 
 function Dashboard({ userId, onLogout }) {
@@ -16,6 +17,7 @@ function Dashboard({ userId, onLogout }) {
   const [newDeviceType, setNewDeviceType] = useState('light');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
 
   // Fetch devices
   const fetchDevices = async () => {
@@ -99,13 +101,34 @@ function Dashboard({ userId, onLogout }) {
           <div className="header-actions">
             <button
               className="btn btn-secondary"
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowIntegrations(!showIntegrations);
+                setShowNotifications(false);
+                setShowScheduler(false);
+                setSelectedDevice(null);
+              }}
+            >
+              Integrations
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setShowIntegrations(false);
+                setShowScheduler(false);
+                setSelectedDevice(null);
+              }}
             >
               {showNotifications ? 'Hide Notifications' : 'Show Notifications'}
             </button>
             <button
               className="btn btn-secondary"
-              onClick={() => setShowScheduler(!showScheduler)}
+              onClick={() => {
+                setShowScheduler(!showScheduler);
+                setShowIntegrations(false);
+                setShowNotifications(false);
+                setSelectedDevice(null);
+              }}
             >
               {showScheduler ? 'Hide Scheduler' : 'Show Scheduler'}
             </button>
@@ -171,7 +194,9 @@ function Dashboard({ userId, onLogout }) {
       )}
 
       <main className="dashboard-main">
-        {showNotifications ? (
+        {showIntegrations ? (
+          <Integrations />
+        ) : showNotifications ? (
           <Notifications isVisible={showNotifications} />
         ) : showScheduler ? (
           <Scheduler devices={devices} onTaskCreated={fetchDevices} />
