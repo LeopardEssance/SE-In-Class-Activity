@@ -14,12 +14,14 @@ A full-stack IoT system with FastAPI backend and React frontend for managing sma
 ## Tech Stack
 
 ### Backend
+
 - **FastAPI** - Modern Python web framework
 - **Pydantic** - Data validation using Python type hints
 - **Uvicorn** - ASGI server
 - **In-memory storage** - No database required
 
 ### Frontend
+
 - **React 18** - UI framework
 - **Vite** - Build tool and dev server
 - **Axios** - HTTP client
@@ -59,39 +61,67 @@ SE-In-Class-Activity/
 ### Backend Setup
 
 1. **Install Python dependencies:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. **Run the FastAPI server:**
+2. **Start the FastAPI server:**
+
+Start the FastAPI server from the project root using the package import (`app.main:app`):
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Notes:
+
+- Use the package-style import (`app.main:app`) so internal relative imports resolve correctly.
+- You may choose a different port (e.g., `--port 8080`) if needed.
+
+## Alternative invocation
+
+If you `cd` into the `app/` directory and run the server from there, use the module name local to that directory:
+
 ```bash
 cd app
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-The backend will be available at:
-- **API:** http://localhost:8000
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
+Running from the repository root with `uvicorn app.main:app` is recommended to keep imports consistent, but the `cd app` variant above also works if you prefer to run the server from inside the package directory.
 
-### Frontend Setup
+Available backend endpoints (when running on port 8080):
 
-1. **Navigate to frontend directory:**
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/docs
+- ReDoc: http://localhost:8080/redoc
+
+### Frontend setup
+
+1. Navigate to the frontend directory and install Node dependencies:
+
 ```bash
 cd frontend
-```
-
-2. **Install Node dependencies:**
-```bash
 npm install
 ```
 
-3. **Run the development server:**
+2. Run the development server:
+
 ```bash
 npm run dev
 ```
 
-The frontend will be available at: **http://localhost:5173**
+The frontend dev server runs on http://localhost:5173 by default and will communicate with the backend at the API URL above (CORS is configured for the usual local dev ports).
+
+### Running tests
+
+With the Python virtual environment active (from repo root):
+
+```bash
+python -m pytest -q
+```
+
+This runs the backend integration tests located under `app/tests/`.
 
 ## Default Credentials
 
@@ -101,10 +131,12 @@ The frontend will be available at: **http://localhost:5173**
 ## API Endpoints
 
 ### Authentication
+
 - `POST /auth/login` - User login
 - `POST /auth/logout` - User logout
 
 ### Devices
+
 - `GET /devices` - List all devices
 - `POST /devices` - Create new device
 - `PUT /devices/{id}/light/brightness` - Set light brightness
@@ -112,37 +144,44 @@ The frontend will be available at: **http://localhost:5173**
 - `DELETE /devices/{id}` - Remove device
 
 ### Scheduler
+
 - `GET /schedule` - Get all scheduled tasks
 - `POST /schedule` - Create scheduled task
 - `DELETE /schedule/{id}` - Cancel task
 
 ### Health Check
+
 - `GET /` - API health status
 
 ## Usage Guide
 
 ### 1. Login
+
 - Open http://localhost:5173
 - Enter credentials (admin / password123)
 - Click "Login"
 
 ### 2. View Devices
+
 - After login, see the dashboard with 2 default lights
 - Devices auto-refresh every 5 seconds
 
 ### 3. Control Lights
+
 - Click on any light card
 - Use the brightness slider (0-100%)
 - Toggle on/off with the button
 - Use quick-set buttons (25%, 50%, 75%, 100%)
 
 ### 4. Add Devices
+
 - Click "Add Device" button
 - Select device type (Light/Thermostat/Security Camera)
 - Enter device name
 - Click "Add Device"
 
 ### 5. Schedule Tasks
+
 - Click "Show Scheduler"
 - Click "Schedule New Task"
 - Select device and action
@@ -150,28 +189,37 @@ The frontend will be available at: **http://localhost:5173**
 - Click "Schedule Task"
 
 ### 6. Delete Devices/Tasks
+
 - Click the × button on any device or task card
 - Confirm deletion
 
 ## Design Patterns Implemented
 
 ### 1. Singleton Pattern
+
 **File:** [app/models/device_factory.py](app/models/device_factory.py)
+
 - Ensures only one DeviceFactory instance exists
 - Global point of access via `get_instance()`
 
 ### 2. Factory Pattern
+
 **File:** [app/models/device_factory.py](app/models/device_factory.py)
+
 - `create_device()` method creates different device types
 - Encapsulates device creation logic
 
 ### 3. Observer Pattern
+
 **File:** [app/models/notification_service.py](app/models/notification_service.py)
+
 - NotificationService maintains list of subscribers
 - Notifies observers when events occur
 
 ### 4. Inheritance
+
 **File:** [app/models/device.py](app/models/device.py)
+
 - `Device` abstract base class
 - `Light` extends Device with brightness control
 - Proper use of `super()` for initialization

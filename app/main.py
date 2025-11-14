@@ -5,12 +5,12 @@ from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime
 
-from models.user import User
-from models.device import Device, Light
-from models.dashboard import Dashboard
-from models.scheduler import Scheduler, ScheduledTask
-from models.device_factory import DeviceFactory
-from models.notification_service import NotificationService, Event
+from .models.user import User
+from .models.device import Device, Light
+from .models.dashboard import Dashboard
+from .models.scheduler import Scheduler, ScheduledTask
+from .models.device_factory import DeviceFactory
+from .models.notification_service import NotificationService, Event
 
 # Initialize FastAPI app
 app = FastAPI(
