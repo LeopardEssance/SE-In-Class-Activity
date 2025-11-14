@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
-from pydantic import BaseModel
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict
 
 from app.models.integrations import IntegrationsService
 
@@ -12,28 +12,74 @@ integrations_service = IntegrationsService()
 
 class IntegrationCreate(BaseModel):
     name: str
+    description: Optional[str] = ""
+    features: Optional[List[str]] = None
+    commands: Optional[List[str]] = None
 
 
 class IntegrationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     name: str
     status: str
-    
-    class Config:
-        from_attributes = True
+    description: str
+    features: List[str]
+    commands: List[str]
+    skills: List[str]
+    connected: bool
+
+
+class IntegrationStatsResponse(BaseModel):
+    connected_count: int
+    total_count: int
 
 
 @router.post("/", response_model=IntegrationResponse)
 def create_integration(request: IntegrationCreate):
     """Create a new integration."""
-    integration = integrations_service.add_integration(name=request.name)
-    return IntegrationResponse(name=integration.name, status=integration.status)
+    integration = integrations_service.add_integration(
+        name=request.name,
+        description=request.description,
+        features=request.features,
+        commands=request.commands
+    )
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
 
 
 @router.get("/", response_model=List[IntegrationResponse])
 def get_integrations():
     """Get all integrations."""
     integrations = integrations_service.get_integrations()
-    return [IntegrationResponse(name=i.name, status=i.status) for i in integrations]
+    return [
+        IntegrationResponse(
+            name=i.name,
+            status=i.status,
+            description=i.description,
+            features=i.features,
+            commands=i.commands,
+            skills=i.skills,
+            connected=i.connected
+        ) for i in integrations
+    ]
+
+
+@router.get("/stats", response_model=IntegrationStatsResponse)
+def get_integration_stats():
+    """Get integration statistics."""
+    total_count = len(integrations_service.get_integrations())
+    connected_count = integrations_service.get_connected_count()
+    return IntegrationStatsResponse(
+        connected_count=connected_count,
+        total_count=total_count
+    )
 
 
 @router.get("/{name}", response_model=IntegrationResponse)
@@ -42,7 +88,15 @@ def get_integration(name: str):
     integration = integrations_service.get_integration(name)
     if not integration:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
-    return IntegrationResponse(name=integration.name, status=integration.status)
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
 
 
 @router.post("/{name}/activate", response_model=IntegrationResponse)
@@ -52,7 +106,15 @@ def activate_integration(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     integration = integrations_service.get_integration(name)
-    return IntegrationResponse(name=integration.name, status=integration.status)
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
 
 
 @router.post("/{name}/deactivate", response_model=IntegrationResponse)
@@ -62,5 +124,55 @@ def deactivate_integration(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
     integration = integrations_service.get_integration(name)
-    return IntegrationResponse(name=integration.name, status=integration.status)
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
+
+
+@router.post("/{name}/toggle", response_model=IntegrationResponse)
+def toggle_integration(name: str):
+    """Toggle connection status of an integration."""
+    success = integrations_service.toggle_connection(name)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
+    integration = integrations_service.get_integration(name)
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
+
+
+@router.get("/{name}/skills", response_model=List[str])
+def get_integration_skills(name: str):
+    """Get skills for an integration (primarily for Alexa)."""
+    integration = integrations_service.get_integration(name)
+    if not integration:
+        raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
+    return integration.skills
+
+
+class SkillRequest(BaseModel):
+    skill: str
+
+
+@router.post("/{name}/skills")
+def add_integration_skill(name: str, request: SkillRequest):
+    """Add a skill to an integration."""
+    integration = integrations_service.get_integration(name)
+    if not integration:
+        raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
+    if request.skill not in integration.skills:
+        integration.skills.append(request.skill)
+    return {"message": f"Skill '{request.skill}' added to {name}"}
 
