@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from models.device import Device, Light
+from app.models.device import Device, Light
 import uuid
 
 
