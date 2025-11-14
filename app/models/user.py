@@ -1,24 +1,32 @@
-import datetime
-import uuid
+from typing import Dict, Optional
+import hashlib
 
 
-class UserPublic:
-    def __init__(self, id: uuid.UUID, is_verified: bool, username: str, password: str, created_at: datetime.datetime):
-        self.id = id
-        self.is_verified = is_verified
+class User:
+    """User class for authentication and session management."""
+
+    def __init__(self, user_id: str, username: str, password: str):
+        """
+        Initialize a user.
+
+        Args:
+            user_id: Unique identifier for the user
+            username: Username for login
+            password: Password (stored as-is for simplicity, in production use hashing)
+        """
+        self.user_id = user_id
         self.username = username
         self.password = password
-        self.created_at = created_at
         self._is_logged_in = False
 
     def login(self, username: str, password: str) -> bool:
         """
         Authenticate user with username and password.
-        
+
         Args:
             username: The username to authenticate
             password: The password to authenticate
-            
+
         Returns:
             bool: True if login successful, False otherwise
         """
@@ -27,14 +35,28 @@ class UserPublic:
             return True
         return False
 
-    def logout(self) -> bool:
+    def logout(self) -> None:
+        """Log out the current user."""
+        self._is_logged_in = False
+
+    def is_logged_in(self) -> bool:
         """
-        Log out the current user.
-        
+        Check if user is currently logged in.
+
         Returns:
-            bool: True if logout successful, False if not logged in
+            bool: True if logged in, False otherwise
         """
-        if self._is_logged_in:
-            self._is_logged_in = False
-            return True
-        return False
+        return self._is_logged_in
+
+    def to_dict(self) -> Dict[str, str]:
+        """
+        Convert user to dictionary representation (without password).
+
+        Returns:
+            Dict containing safe user data
+        """
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "is_logged_in": self._is_logged_in
+        }
