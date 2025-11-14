@@ -155,4 +155,21 @@ export const schedulerAPI = {
   },
 };
 
+// Notifications API
+export const notificationsAPI = {
+  getNotifications: async (limit = 20) => {
+    try {
+      const response = await api.get('/notifications', {
+        params: { 
+          session_id: sessionId,
+          limit: limit
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Failed to fetch notifications' };
+    }
+  },
+};
+
 export default api;

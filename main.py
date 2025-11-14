@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import integrations, auth, devices, scheduler
+from app.api import integrations, auth, devices, scheduler, notifications
 
 app = FastAPI(
     title="SE In-Class Activity API",
@@ -22,6 +22,7 @@ app.include_router(integrations.router)
 app.include_router(auth.router)
 app.include_router(devices.router)
 app.include_router(scheduler.router)
+app.include_router(notifications.router)
 
 
 @app.get("/")

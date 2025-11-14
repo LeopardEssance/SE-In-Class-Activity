@@ -1,59 +1,15 @@
 from typing import Optional, Dict, Any
-from app.models.device import Device, Light
+from app.models.device import Device, Light, Thermostat, SecurityCamera
 import uuid
 
 
-class Thermostat(Device):
-    """Thermostat device for temperature control."""
-
-    def __init__(self, device_id: str, device_name: str):
-        """Initialize a thermostat device."""
-        super().__init__(device_id, device_name, "thermostat")
-        self.temperature: float = 20.0
-        self.target_temperature: float = 22.0
-
-    def set_temperature(self, temp: float) -> bool:
-        """Set target temperature."""
-        if 10.0 <= temp <= 35.0:
-            self.target_temperature = temp
-            return True
-        return False
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert thermostat to dictionary."""
-        base_dict = super().to_dict()
-        base_dict.update({
-            "temperature": self.temperature,
-            "target_temperature": self.target_temperature
-        })
-        return base_dict
+# Thermostat and Light are implemented in their own modules (app/models/thermostat.py and
+# app/models/light.py) to keep device implementations separate and importable by the frontend
+# and factory.
 
 
-class SecurityCamera(Device):
-    """Security camera device."""
-
-    def __init__(self, device_id: str, device_name: str):
-        """Initialize a security camera device."""
-        super().__init__(device_id, device_name, "security_camera")
-        self.recording: bool = False
-
-    def start_recording(self) -> None:
-        """Start recording."""
-        self.recording = True
-        self.status = "recording"
-
-    def stop_recording(self) -> None:
-        """Stop recording."""
-        self.recording = False
-        self.status = "on"
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert camera to dictionary."""
-        base_dict = super().to_dict()
-        base_dict.update({
-            "recording": self.recording
-        })
-        return base_dict
+# SecurityCamera is implemented in app/models/security_camera.py to avoid duplicate
+# class definitions and to keep device-specific classes in their own module.
 
 
 class DeviceFactory:

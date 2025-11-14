@@ -3,6 +3,7 @@ import { devicesAPI, authAPI } from '../services/api';
 import DeviceCard from './DeviceCard';
 import LightControl from './LightControl';
 import Scheduler from './Scheduler';
+import Notifications from './Notifications';
 import '../styles/Dashboard.css';
 
 function Dashboard({ userId, onLogout }) {
@@ -14,6 +15,7 @@ function Dashboard({ userId, onLogout }) {
   const [showAddDevice, setShowAddDevice] = useState(false);
   const [newDeviceType, setNewDeviceType] = useState('light');
   const [newDeviceName, setNewDeviceName] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Fetch devices
   const fetchDevices = async () => {
@@ -97,6 +99,12 @@ function Dashboard({ userId, onLogout }) {
           <div className="header-actions">
             <button
               className="btn btn-secondary"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              {showNotifications ? 'Hide Notifications' : 'Show Notifications'}
+            </button>
+            <button
+              className="btn btn-secondary"
               onClick={() => setShowScheduler(!showScheduler)}
             >
               {showScheduler ? 'Hide Scheduler' : 'Show Scheduler'}
@@ -163,7 +171,9 @@ function Dashboard({ userId, onLogout }) {
       )}
 
       <main className="dashboard-main">
-        {showScheduler ? (
+        {showNotifications ? (
+          <Notifications isVisible={showNotifications} />
+        ) : showScheduler ? (
           <Scheduler devices={devices} onTaskCreated={fetchDevices} />
         ) : selectedDevice ? (
           <LightControl
