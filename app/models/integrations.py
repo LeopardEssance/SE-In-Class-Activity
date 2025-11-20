@@ -1,43 +1,53 @@
-from typing import List, Optional
+from typing import List, Optional, Protocol
+from dataclasses import dataclass, field
 
 
+class IntegrationProtocol(Protocol):
+    """Protocol defining the interface for integration objects."""
+    name: str
+    status: str
+    description: str
+    features: List[str]
+    commands: List[str]
+    skills: List[str]
+    connected: bool
+
+
+@dataclass
 class Integration:
     """Represents an external integration."""
-    def __init__(self, name: str, status: str = "inactive", description: str = "", 
-                 features: List[str] = None, commands: List[str] = None, 
-                 skills: List[str] = None, connected: bool = False):
-        self.name = name
-        self.status = status  # active, inactive, error
-        self.description = description
-        self.features = features or []
-        self.commands = commands or []
-        self.skills = skills or []
-        self.connected = connected
+    name: str
+    status: str = "inactive"  # active, inactive, error
+    description: str = ""
+    features: List[str] = field(default_factory=list)
+    commands: List[str] = field(default_factory=list)
+    skills: List[str] = field(default_factory=list)
+    connected: bool = False
 
 
 class IntegrationsService:
     """Service class for managing integrations."""
     
     def __init__(self):
-        self.integrations: List[Integration] = []
+        self.integrations: List[IntegrationProtocol] = []
         self.initialize_default_integrations()
     
     def add_integration(self, name: str, description: str = "", features: List[str] = None,
                        commands: List[str] = None, skills: List[str] = None, 
-                       connected: bool = False) -> Integration:
+                       connected: bool = False) -> IntegrationProtocol:
         """Add a new integration."""
         integration = Integration(
             name=name, status="inactive", description=description,
-            features=features, commands=commands, skills=skills, connected=connected
+            features=features or [], commands=commands or [], skills=skills or [], connected=connected
         )
         self.integrations.append(integration)
         return integration
     
-    def get_integrations(self) -> List[Integration]:
+    def get_integrations(self) -> List[IntegrationProtocol]:
         """Get all integrations."""
         return self.integrations
     
-    def get_integration(self, name: str) -> Optional[Integration]:
+    def get_integration(self, name: str) -> Optional[IntegrationProtocol]:
         """Get a specific integration by name."""
         for integration in self.integrations:
             if integration.name == name:
