@@ -87,6 +87,21 @@ class NotificationService:
             return True
         return False
 
+    def _create_event(self, event_type: str, device_id: str, message: str, data: Dict[str, Any] = None) -> Event:
+        """
+        Create an Event object with the specified parameters.
+
+        Args:
+            event_type: Type of event (e.g., 'device_status_change', 'task_scheduled')
+            device_id: ID of the device associated with the event
+            message: Human-readable message describing the event
+            data: Additional event data
+
+        Returns:
+            Event instance
+        """
+        return Event(event_type, device_id, message, data)
+
     def notify(self, event: Event) -> None:
         """
         Notify all subscribers about an event.
@@ -108,7 +123,7 @@ class NotificationService:
             device_id: Optional device ID associated with notification
             event_type: Type of event
         """
-        event = Event(event_type, device_id, message)
+        event = self._create_event(event_type, device_id, message)
         self.notifications.put(event)
         self.notification_history.append(event)  # Keep in history
 
