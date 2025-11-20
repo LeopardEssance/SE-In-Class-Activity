@@ -1,5 +1,13 @@
 from typing import List, Optional, Protocol
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class IntegrationStatus(str, Enum):
+    """Enumeration of integration status values."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ERROR = "error"
 
 
 class IntegrationProtocol(Protocol):
@@ -17,7 +25,7 @@ class IntegrationProtocol(Protocol):
 class Integration:
     """Represents an external integration."""
     name: str
-    status: str = "inactive"  # active, inactive, error
+    status: str = IntegrationStatus.INACTIVE.value
     description: str = ""
     features: List[str] = field(default_factory=list)
     commands: List[str] = field(default_factory=list)
@@ -37,7 +45,7 @@ class IntegrationsService:
                        connected: bool = False) -> IntegrationProtocol:
         """Add a new integration."""
         integration = Integration(
-            name=name, status="inactive", description=description,
+            name=name, status=IntegrationStatus.INACTIVE.value, description=description,
             features=features or [], commands=commands or [], skills=skills or [], connected=connected
         )
         self.integrations.append(integration)
@@ -58,7 +66,7 @@ class IntegrationsService:
         """Activate an integration."""
         integration = self.get_integration(name)
         if integration:
-            integration.status = "active"
+            integration.status = IntegrationStatus.ACTIVE.value
             return True
         return False
     
@@ -66,7 +74,7 @@ class IntegrationsService:
         """Deactivate an integration."""
         integration = self.get_integration(name)
         if integration:
-            integration.status = "inactive"
+            integration.status = IntegrationStatus.INACTIVE.value
             return True
         return False
     
