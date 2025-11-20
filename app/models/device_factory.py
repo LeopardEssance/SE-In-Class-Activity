@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Type, Callable
 from app.models.device import Device, Light, Thermostat, SecurityCamera
 import uuid
 
@@ -16,6 +16,14 @@ class DeviceFactory:
     """Singleton factory for creating devices."""
 
     _instance: Optional['DeviceFactory'] = None
+    
+    # Registry mapping device types to their constructor functions
+    _device_registry: Dict[str, Callable[[str, str], Device]] = {
+        'light': Light,
+        'thermostat': Thermostat,
+        'security_camera': SecurityCamera,
+        'securitycamera': SecurityCamera,  # Support alternative naming
+    }
 
     def __new__(cls):
         """Ensure only one instance exists (Singleton pattern)."""
@@ -34,6 +42,17 @@ class DeviceFactory:
         if DeviceFactory._instance is None:
             DeviceFactory._instance = DeviceFactory()
         return DeviceFactory._instance
+
+    @classmethod
+    def register_device(cls, device_type: str, device_class: Type[Device]) -> None:
+        """
+        Register a new device type in the factory registry.
+        
+        Args:
+            device_type: String identifier for the device type
+            device_class: Device class to instantiate
+        """
+        cls._device_registry[device_type.lower()] = device_class
 
     def create_device(self, device_type: str, config: Optional[Dict[str, Any]] = None) -> Device:
         """
@@ -55,15 +74,12 @@ class DeviceFactory:
         device_id = config.get("device_id", str(uuid.uuid4())) if config else str(uuid.uuid4())
         device_name = config.get("device_name", f"{device_type}_{device_id[:8]}") if config else f"{device_type}_{device_id[:8]}"
 
-        if device_type == 'light':
-            device = Light(device_id, device_name)
-        elif device_type == 'thermostat':
-            device = Thermostat(device_id, device_name)
-        elif device_type in ['securitycamera', 'security_camera']:
-            device = SecurityCamera(device_id, device_name)
-        else:
+        # Look up device class in registry
+        device_class = self._device_registry.get(device_type)
+        if device_class is None:
             raise ValueError(f"Unknown device type: {device_type}")
-
+        
+        device = device_class(device_id, device_name)
         return device
 
     def configure_device(self, device: Device, config: Optional[Dict[str, Any]] = None) -> None:
