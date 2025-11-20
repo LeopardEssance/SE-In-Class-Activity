@@ -9,6 +9,10 @@ from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+# Error messages
+INVALID_CREDENTIALS_MESSAGE = "Invalid username or password"
+INVALID_SESSION_MESSAGE = "Invalid session"
+
 
 def get_user_from_session(session_id: str) -> Optional[User]:
     """Get user from session ID."""
@@ -34,7 +38,7 @@ async def login(request: LoginRequest):
         if not user:
             return LoginResponse(
                 success=False,
-                message="Invalid username or password"
+                message=INVALID_CREDENTIALS_MESSAGE
             )
 
         # Verify credentials
@@ -51,7 +55,7 @@ async def login(request: LoginRequest):
         else:
             return LoginResponse(
                 success=False,
-                message="Invalid username or password"
+                message=INVALID_CREDENTIALS_MESSAGE
             )
     except Exception as e:
         raise HTTPException(
@@ -69,7 +73,7 @@ async def logout(session_id: str = Query(..., description="Session ID")):
         if not user:
             return LogoutResponse(
                 success=False,
-                message="Invalid session"
+                message=INVALID_SESSION_MESSAGE
             )
 
         user.logout()
