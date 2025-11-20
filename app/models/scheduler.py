@@ -74,6 +74,22 @@ class Scheduler:
         self.tasks = [t for t in self.tasks if t.task_id != task_id]
         return len(self.tasks) < initial_length
 
+    def _parse_task_time(self, scheduled_time: str) -> Optional[datetime]:
+        """
+        Parse a scheduled time string to a datetime object.
+
+        Args:
+            scheduled_time: ISO format time string
+
+        Returns:
+            Parsed datetime object if valid, None otherwise
+        """
+        try:
+            return datetime.fromisoformat(scheduled_time)
+        except ValueError:
+            # Invalid time format
+            return None
+
     def execute_tasks(self) -> List[ScheduledTask]:
         """
         Execute tasks that are due (simplified - just returns tasks).
@@ -87,14 +103,10 @@ class Scheduler:
 
         for task in self.tasks:
             if not task.executed:
-                try:
-                    task_time = datetime.fromisoformat(task.scheduled_time)
-                    if task_time <= current_time:
-                        task.executed = True
-                        due_tasks.append(task)
-                except ValueError:
-                    # Invalid time format, skip this task
-                    continue
+                task_time = self._parse_task_time(task.scheduled_time)
+                if task_time and task_time <= current_time:
+                    task.executed = True
+                    due_tasks.append(task)
 
         return due_tasks
 

@@ -37,15 +37,7 @@ class IntegrationStatsResponse(BaseModel):
 
 def _to_response(integration: IntegrationProtocol) -> IntegrationResponse:
     """Convert an Integration to IntegrationResponse."""
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return IntegrationResponse.model_validate(integration)
 
 
 @router.post("/", response_model=IntegrationResponse)

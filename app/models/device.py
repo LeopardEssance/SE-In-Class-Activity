@@ -1,5 +1,13 @@
 from typing import Optional, Dict, Any
 from abc import ABC, abstractmethod
+from enum import Enum
+
+
+class DeviceStatus(str, Enum):
+    """Enumeration of device status values."""
+    ON = "on"
+    OFF = "off"
+    RECORDING = "recording"
 
 
 class Device(ABC):
@@ -17,15 +25,15 @@ class Device(ABC):
         self.device_id = device_id
         self.device_name = device_name
         self.device_type = device_type
-        self.status = "off"
+        self.status = DeviceStatus.OFF.value
 
     def turn_on(self) -> None:
         """Turn the device on."""
-        self.status = "on"
+        self.status = DeviceStatus.ON.value
 
     def turn_off(self) -> None:
         """Turn the device off."""
-        self.status = "off"
+        self.status = DeviceStatus.OFF.value
 
     def get_status(self) -> str:
         """
@@ -88,10 +96,10 @@ class Light(Device):
             self.brightness = level
             if level > 0:
                 self.is_on = True
-                self.status = "on"
+                self.status = DeviceStatus.ON.value
             else:
                 self.is_on = False
-                self.status = "off"
+                self.status = DeviceStatus.OFF.value
             return True
         return False
 
@@ -146,28 +154,28 @@ class SecurityCamera(Device):
         self.resolution: str = resolution
 
     def start_recording(self) -> None:
-        if self.status != "on":
+        if self.status != DeviceStatus.ON.value:
             return
         if self.recording:
             return
         self.recording = True
-        self.status = "recording"
+        self.status = DeviceStatus.RECORDING.value
 
     def stop_recording(self) -> None:
         if not self.recording:
             return
         self.recording = False
-        self.status = "on"
+        self.status = DeviceStatus.ON.value
 
     def capture_image(self) -> Optional[str]:
-        if self.status != "on" and self.status != "recording":
+        if self.status != DeviceStatus.ON.value and self.status != DeviceStatus.RECORDING.value:
             return None
         image_filename = f"{self.device_id}_capture.jpg"
         return image_filename
 
     def get_status(self) -> str:
         base_status = super().get_status()
-        recording_status = "recording" if self.recording else "not recording"
+        recording_status = DeviceStatus.RECORDING.value if self.recording else "not recording"
         return f"{base_status}, {recording_status}, resolution: {self.resolution}"
 
     def to_dict(self) -> Dict[str, Any]:
