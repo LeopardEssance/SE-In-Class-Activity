@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from app.models.integrations import IntegrationsService
+from app.models.integrations import IntegrationsService, IntegrationProtocol
 from app.api.storage import notification_service
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
@@ -35,6 +35,19 @@ class IntegrationStatsResponse(BaseModel):
     total_count: int
 
 
+def _to_response(integration: IntegrationProtocol) -> IntegrationResponse:
+    """Convert an Integration to IntegrationResponse."""
+    return IntegrationResponse(
+        name=integration.name,
+        status=integration.status,
+        description=integration.description,
+        features=integration.features,
+        commands=integration.commands,
+        skills=integration.skills,
+        connected=integration.connected
+    )
+
+
 @router.post("/", response_model=IntegrationResponse)
 def create_integration(request: IntegrationCreate):
     """Create a new integration."""
@@ -52,32 +65,14 @@ def create_integration(request: IntegrationCreate):
         "integration_created"
     )
     
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return _to_response(integration)
 
 
 @router.get("/", response_model=List[IntegrationResponse])
 def get_integrations():
     """Get all integrations."""
     integrations = integrations_service.get_integrations()
-    return [
-        IntegrationResponse(
-            name=i.name,
-            status=i.status,
-            description=i.description,
-            features=i.features,
-            commands=i.commands,
-            skills=i.skills,
-            connected=i.connected
-        ) for i in integrations
-    ]
+    return [_to_response(i) for i in integrations]
 
 
 @router.get("/stats", response_model=IntegrationStatsResponse)
@@ -97,15 +92,7 @@ def get_integration(name: str):
     integration = integrations_service.get_integration(name)
     if not integration:
         raise HTTPException(status_code=404, detail=f"Integration '{name}' not found")
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return _to_response(integration)
 
 
 @router.post("/{name}/activate", response_model=IntegrationResponse)
@@ -123,15 +110,7 @@ def activate_integration(name: str):
         "integration_activated"
     )
     
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return _to_response(integration)
 
 
 @router.post("/{name}/deactivate", response_model=IntegrationResponse)
@@ -149,15 +128,7 @@ def deactivate_integration(name: str):
         "integration_deactivated"
     )
     
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return _to_response(integration)
 
 
 @router.post("/{name}/toggle", response_model=IntegrationResponse)
@@ -176,15 +147,7 @@ def toggle_integration(name: str):
         "integration_toggled"
     )
     
-    return IntegrationResponse(
-        name=integration.name,
-        status=integration.status,
-        description=integration.description,
-        features=integration.features,
-        commands=integration.commands,
-        skills=integration.skills,
-        connected=integration.connected
-    )
+    return _to_response(integration)
 
 
 @router.get("/{name}/skills", response_model=List[str])
