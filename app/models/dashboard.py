@@ -13,7 +13,7 @@ class Dashboard:
             user_id: User identifier this dashboard belongs to
         """
         self.user_id = user_id
-        self.device_list: List[Device] = []
+        self.devices: Dict[str, Device] = {}
 
     def display_devices(self) -> List[Dict[str, Any]]:
         """
@@ -22,7 +22,7 @@ class Dashboard:
         Returns:
             List of device dictionaries
         """
-        return [device.to_dict() for device in self.device_list]
+        return [device.to_dict() for device in self.devices.values()]
 
     def refresh_status(self) -> List[Dict[str, Any]]:
         """
@@ -44,10 +44,10 @@ class Dashboard:
             bool: True if added successfully, False if device already exists
         """
         # Check if device already exists
-        if any(d.device_id == device.device_id for d in self.device_list):
+        if device.device_id in self.devices:
             return False
 
-        self.device_list.append(device)
+        self.devices[device.device_id] = device
         return True
 
     def remove_device(self, device_id: str) -> bool:
@@ -60,9 +60,10 @@ class Dashboard:
         Returns:
             bool: True if removed successfully, False if device not found
         """
-        initial_length = len(self.device_list)
-        self.device_list = [d for d in self.device_list if d.device_id != device_id]
-        return len(self.device_list) < initial_length
+        if device_id in self.devices:
+            del self.devices[device_id]
+            return True
+        return False
 
     def get_device(self, device_id: str) -> Optional[Device]:
         """
@@ -74,10 +75,7 @@ class Dashboard:
         Returns:
             Device instance if found, None otherwise
         """
-        for device in self.device_list:
-            if device.device_id == device_id:
-                return device
-        return None
+        return self.devices.get(device_id)
 
     def get_device_count(self) -> int:
         """
@@ -86,4 +84,4 @@ class Dashboard:
         Returns:
             int: Number of devices in the dashboard
         """
-        return len(self.device_list)
+        return len(self.devices)
