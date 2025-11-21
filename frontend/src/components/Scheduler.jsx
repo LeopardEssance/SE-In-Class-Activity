@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { schedulerAPI } from '../services/api';
 import '../styles/Scheduler.css';
 
+const TASK_ACTIONS = [
+  { value: 'turn_on', label: 'Turn On' },
+  { value: 'turn_off', label: 'Turn Off' },
+  { value: 'set_brightness', label: 'Set Brightness' }
+];
+
 function Scheduler({ devices, onTaskCreated }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,23 +41,27 @@ function Scheduler({ devices, onTaskCreated }) {
     return () => clearInterval(interval);
   }, []);
 
+  const combineDateTimeToISO = (date, time) => {
+    return new Date(`${date}T${time}`).toISOString();
+  };
+
+  const resetTaskForm = () => {
+    setSelectedDevice('');
+    setSelectedAction('turn_on');
+    setScheduledDate('');
+    setScheduledTime('');
+    setShowAddTask(false);
+  };
+
   const handleAddTask = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      // Combine date and time into ISO format
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
-
+      const scheduledDateTime = combineDateTimeToISO(scheduledDate, scheduledTime);
       await schedulerAPI.createTask(selectedDevice, selectedAction, scheduledDateTime);
 
-      // Reset form
-      setSelectedDevice('');
-      setSelectedAction('turn_on');
-      setScheduledDate('');
-      setScheduledTime('');
-      setShowAddTask(false);
-
+      resetTaskForm();
       fetchTasks();
       onTaskCreated();
     } catch (err) {
@@ -79,22 +89,14 @@ function Scheduler({ devices, onTaskCreated }) {
     }
   };
 
-  const getDeviceName = (deviceId) => {
-    const device = devices.find((d) => d.device_id === deviceId);
-    return device ? device.device_name : deviceId;
+  const getDeviceName = (targetDeviceId) => {
+    const device = devices.find((device) => device.device_id === targetDeviceId);
+    return device ? device.device_name : targetDeviceId;
   };
 
-  const getActionLabel = (action) => {
-    switch (action) {
-      case 'turn_on':
-        return 'Turn On';
-      case 'turn_off':
-        return 'Turn Off';
-      case 'set_brightness':
-        return 'Set Brightness';
-      default:
-        return action;
-    }
+  const getActionLabel = (actionValue) => {
+    const action = TASK_ACTIONS.find((a) => a.value === actionValue);
+    return action ? action.label : actionValue;
   };
 
   if (loading) {
@@ -151,9 +153,11 @@ function Scheduler({ devices, onTaskCreated }) {
                 onChange={(e) => setSelectedAction(e.target.value)}
                 required
               >
-                <option value="turn_on">Turn On</option>
-                <option value="turn_off">Turn Off</option>
-                <option value="set_brightness">Set Brightness</option>
+                {TASK_ACTIONS.map((action) => (
+                  <option key={action.value} value={action.value}>
+                    {action.label}
+                  </option>
+                ))}
               </select>
             </div>
 

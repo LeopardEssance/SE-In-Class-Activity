@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { authAPI } from '../services/api';
 import '../styles/LoginPage.css';
+import FormInput from './FormInput';
 
 function LoginPage({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -16,11 +17,12 @@ function LoginPage({ onLoginSuccess }) {
     try {
       const response = await authAPI.login(username, password);
 
-      if (response.success) {
-        onLoginSuccess(response.user_id);
-      } else {
+      if (!response.success) {
         setError(response.message || 'Login failed');
+        return;
       }
+
+      onLoginSuccess(response.user_id);
     } catch (err) {
       setError(err.message || 'An error occurred during login');
     } finally {
@@ -37,31 +39,25 @@ function LoginPage({ onLoginSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
-              required
-              disabled={loading}
-            />
-          </div>
+          <FormInput
+            id="username"
+            label="Username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter username"
+            disabled={loading}
+          />
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              required
-              disabled={loading}
-            />
-          </div>
+          <FormInput
+            id="password"
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            disabled={loading}
+          />
 
           {error && (
             <div className="error-message">

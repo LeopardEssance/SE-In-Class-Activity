@@ -1,56 +1,71 @@
 import { useState, useEffect } from 'react';
 import { devicesAPI } from '../services/api';
 import '../styles/LightControl.css';
+import { useDebounce } from '../hooks/useDebounce';
+import QuickBrightnessControls from './QuickBrightnessControls';
+
+const DEBOUNCE_DELAY_MS = 300;
+const MIN_BRIGHTNESS = 0;
+const MAX_BRIGHTNESS = 100;
+const OPACITY_MIN = 0.3;
+const OPACITY_RANGE = 0.7;
+const BRIGHTNESS_PRESETS = [25, 50, 75, 100];
 
 function LightControl({ device, onUpdate, onClose }) {
-  const [brightness, setBrightness] = useState(device.brightness || 0);
+  const [brightness, setBrightness] = useState(device.brightness || MIN_BRIGHTNESS);
   const [isOn, setIsOn] = useState(device.is_on || false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setBrightness(device.brightness || 0);
+    setBrightness(device.brightness || MIN_BRIGHTNESS);
     setIsOn(device.is_on || false);
   }, [device]);
 
-  const handleBrightnessChange = async (newBrightness) => {
-    setBrightness(newBrightness);
-
-    // Debounce API calls
-    if (handleBrightnessChange.timeout) {
-      clearTimeout(handleBrightnessChange.timeout);
-    }
-
-    handleBrightnessChange.timeout = setTimeout(async () => {
-      setLoading(true);
-      setError('');
-
-      try {
-        await devicesAPI.setBrightness(device.device_id, parseInt(newBrightness));
-        setIsOn(newBrightness > 0);
-        onUpdate();
-      } catch (err) {
-        setError(err.detail || 'Failed to set brightness');
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-  };
-
-  const handleToggle = async () => {
+  // Helper function to wrap API calls with loading and error handling
+  const withLoadingAndError = async (apiCall, errorMessage) => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await devicesAPI.toggleDevice(device.device_id);
-      setIsOn(response.is_on);
-      setBrightness(response.is_on ? 100 : 0);
-      onUpdate();
+      await apiCall();
     } catch (err) {
-      setError(err.detail || 'Failed to toggle device');
+      setError(err.detail || errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const debouncedAPICall = useDebounce(async (newBrightness) => {
+    await withLoadingAndError(async () => {
+      await devicesAPI.setBrightness(device.device_id, parseInt(newBrightness));
+      setIsOn(newBrightness > 0);
+      onUpdate();
+    }, 'Failed to set brightness');
+  }, DEBOUNCE_DELAY_MS);
+
+  const handleBrightnessChange = (newBrightness) => {
+    setBrightness(newBrightness);
+    debouncedAPICall(newBrightness);
+  };
+
+  const handleToggle = async () => {
+    await withLoadingAndError(async () => {
+      const response = await devicesAPI.toggleDevice(device.device_id);
+      setIsOn(response.is_on);
+      setBrightness(response.is_on ? MAX_BRIGHTNESS : MIN_BRIGHTNESS);
+      onUpdate();
+    }, 'Failed to toggle device');
+  };
+
+  // Helper function to calculate bulb opacity
+  const calculateBulbOpacity = (isOn, brightness) => {
+    const baseOpacity = OPACITY_MIN;
+    if (!isOn) return baseOpacity;
+
+    const brightnessRatio = brightness / MAX_BRIGHTNESS;
+    const additionalOpacity = brightnessRatio * OPACITY_RANGE;
+    return baseOpacity + additionalOpacity;
   };
 
   return (
@@ -73,7 +88,7 @@ function LightControl({ device, onUpdate, onClose }) {
           <div
             className={`light-bulb ${isOn ? 'light-on' : 'light-off'}`}
             style={{
-              opacity: isOn ? 0.3 + (brightness / 100) * 0.7 : 0.3,
+              opacity: calculateBulbOpacity(isOn, brightness),
             }}
           >
             <span className="bulb-icon">💡</span>
@@ -100,18 +115,18 @@ function LightControl({ device, onUpdate, onClose }) {
             </label>
 
             <div className="slider-container">
-              <span className="slider-label">0%</span>
+              <span className="slider-label">{MIN_BRIGHTNESS}%</span>
               <input
                 id="brightness-slider"
                 type="range"
-                min="0"
-                max="100"
+                min={MIN_BRIGHTNESS}
+                max={MAX_BRIGHTNESS}
                 value={brightness}
                 onChange={(e) => handleBrightnessChange(e.target.value)}
                 className="brightness-slider"
                 disabled={loading}
               />
-              <span className="slider-label">100%</span>
+              <span className="slider-label">{MAX_BRIGHTNESS}%</span>
             </div>
 
             <div className="brightness-value">
@@ -119,39 +134,11 @@ function LightControl({ device, onUpdate, onClose }) {
             </div>
           </div>
 
-          <div className="quick-controls">
-            <h4>Quick Settings</h4>
-            <div className="quick-buttons">
-              <button
-                className="quick-btn"
-                onClick={() => handleBrightnessChange(25)}
-                disabled={loading}
-              >
-                25%
-              </button>
-              <button
-                className="quick-btn"
-                onClick={() => handleBrightnessChange(50)}
-                disabled={loading}
-              >
-                50%
-              </button>
-              <button
-                className="quick-btn"
-                onClick={() => handleBrightnessChange(75)}
-                disabled={loading}
-              >
-                75%
-              </button>
-              <button
-                className="quick-btn"
-                onClick={() => handleBrightnessChange(100)}
-                disabled={loading}
-              >
-                100%
-              </button>
-            </div>
-          </div>
+          <QuickBrightnessControls
+            onBrightnessChange={handleBrightnessChange}
+            disabled={loading}
+            presets={BRIGHTNESS_PRESETS}
+          />
         </div>
 
         <div className="device-info">
