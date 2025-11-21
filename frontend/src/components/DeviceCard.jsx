@@ -1,21 +1,22 @@
-import '../styles/DeviceCard.css';
+import "../styles/DeviceCard.css";
+import DeviceDetails from "./DeviceDetails";
 
 function DeviceCard({ device, onClick, onDelete }) {
   const getDeviceIcon = (type) => {
-    switch (type) {
-      case 'light':
-        return '💡';
-      case 'thermostat':
-        return '🌡️';
-      case 'security_camera':
-        return '📷';
-      default:
-        return '🔌';
-    }
+    const icons = {
+      light: "💡",
+      thermostat: "🌡️",
+      security_camera: "📷",
+    };
+    return icons[type] || "🔌";
   };
 
   const getStatusColor = (status) => {
-    return status === 'on' ? '#4CAF50' : '#757575';
+    const colors = {
+      on: "#4CAF50",
+      off: "#757575",
+    };
+    return colors[status] || colors.off;
   };
 
   return (
@@ -44,17 +45,13 @@ function DeviceCard({ device, onClick, onDelete }) {
             style={{ backgroundColor: getStatusColor(device.status) }}
           ></span>
           <span className="status-text">
-            {device.status === 'on' ? 'On' : 'Off'}
+            {device.status === "on" ? "On" : "Off"}
           </span>
         </div>
 
-        {device.device_type === 'light' && device.brightness !== undefined && (
-          <div className="device-details">
-            <p>Brightness: {device.brightness}%</p>
-          </div>
-        )}
+        <DeviceDetails device={device} />
 
-        {device.device_type === 'thermostat' && (
+        {device.device_type === "thermostat" && (
           <div className="device-details">
             <p>Temperature: {device.temperature}°C</p>
             <p>Target: {device.target_temperature}°C</p>
@@ -62,7 +59,7 @@ function DeviceCard({ device, onClick, onDelete }) {
         )}
       </div>
 
-      {device.device_type === 'light' && (
+      {device.device_type === "light" && (
         <div className="device-card-footer">
           <span className="click-hint">Click to control</span>
         </div>

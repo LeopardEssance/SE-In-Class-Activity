@@ -1,42 +1,36 @@
-import { useState, useEffect } from 'react';
-import { devicesAPI, authAPI } from '../services/api';
-import DeviceCard from './DeviceCard';
-import LightControl from './LightControl';
-import Scheduler from './Scheduler';
-import Notifications from './Notifications';
-import Integrations from './Integrations';
-import '../styles/Dashboard.css';
+import { useState, useEffect } from "react";
+import { devicesAPI, authAPI } from "../services/api";
+import DeviceCard from "./DeviceCard";
+import LightControl from "./LightControl";
+import Scheduler from "./Scheduler";
+import Notifications from "./Notifications";
+import Integrations from "./Integrations";
+import "../styles/Dashboard.css";
+import AddDeviceForm from "./AddDeviceForm";
+import usePollingFetch from "../../hooks/usePollingFetch";
 
-function Dashboard({ userId, onLogout }) {
-  const [devices, setDevices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+function Dashboard({ onLogout }) {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showAddDevice, setShowAddDevice] = useState(false);
-  const [newDeviceType, setNewDeviceType] = useState('light');
-  const [newDeviceName, setNewDeviceName] = useState('');
+  const [newDevice, setNewDevice] = useState({ type: "light", name: "" });
   const [showNotifications, setShowNotifications] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
 
+  const DEVICE_POLL_INTERVAL_MS = 5000;
   // Fetch devices
-  const fetchDevices = async () => {
-    try {
-      const data = await devicesAPI.getDevices();
-      setDevices(data);
-      setError('');
-    } catch (err) {
-      setError(err.detail || 'Failed to fetch devices');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: devices,
+    loading,
+    error,
+    setError,
+    refetch: fetchDevices,
+  } = usePollingFetch(devicesAPI.getDevices, DEVICE_POLL_INTERVAL_MS);
 
   useEffect(() => {
     fetchDevices();
 
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchDevices, 5000);
+    const interval = setInterval(fetchDevices, DEVICE_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, []);
@@ -46,7 +40,7 @@ function Dashboard({ userId, onLogout }) {
       await authAPI.logout();
       onLogout();
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
       onLogout(); // Logout anyway
     }
   };
@@ -54,28 +48,32 @@ function Dashboard({ userId, onLogout }) {
   const handleAddDevice = async (e) => {
     e.preventDefault();
     try {
-      await devicesAPI.createDevice(newDeviceType, newDeviceName);
-      setNewDeviceName('');
+      await devicesAPI.createDevice(newDevice.type, newDevice.name);
+      setNewDevice({ type: "light", name: "" });
       setShowAddDevice(false);
       fetchDevices();
     } catch (err) {
-      setError(err.detail || 'Failed to add device');
+      setError(getErrorMessage(err, "add device"));
     }
   };
 
   const handleDeleteDevice = async (deviceId) => {
-    if (window.confirm('Are you sure you want to delete this device?')) {
+    if (window.confirm("Are you sure you want to delete this device?")) {
       try {
         await devicesAPI.deleteDevice(deviceId);
         fetchDevices();
       } catch (err) {
-        setError(err.detail || 'Failed to delete device');
+        setError(getErrorMessage(err, "delete device"));
       }
     }
   };
 
+  const isDeviceInteractive = (device) => {
+    return device.device_type === "light";
+  };
+
   const handleDeviceClick = (device) => {
-    if (device.device_type === 'light') {
+    if (isDeviceInteractive(device)) {
       setSelectedDevice(device);
     }
   };
@@ -84,6 +82,8 @@ function Dashboard({ userId, onLogout }) {
     fetchDevices();
     setSelectedDevice(null);
   };
+
+  const getErrorMessage = (err, action) => err.detail || `Failed to ${action}`;
 
   if (loading) {
     return (
@@ -119,7 +119,7 @@ function Dashboard({ userId, onLogout }) {
                 setSelectedDevice(null);
               }}
             >
-              {showNotifications ? 'Hide Notifications' : 'Show Notifications'}
+              {showNotifications ? "Hide Notifications" : "Show Notifications"}
             </button>
             <button
               className="btn btn-secondary"
@@ -130,7 +130,7 @@ function Dashboard({ userId, onLogout }) {
                 setSelectedDevice(null);
               }}
             >
-              {showScheduler ? 'Hide Scheduler' : 'Show Scheduler'}
+              {showScheduler ? "Hide Scheduler" : "Show Scheduler"}
             </button>
             <button
               className="btn btn-secondary"
@@ -148,49 +148,17 @@ function Dashboard({ userId, onLogout }) {
       {error && (
         <div className="error-banner">
           {error}
-          <button onClick={() => setError('')}>×</button>
+          <button onClick={() => setError("")}>×</button>
         </div>
       )}
 
       {showAddDevice && (
-        <div className="add-device-form">
-          <h3>Add New Device</h3>
-          <form onSubmit={handleAddDevice}>
-            <div className="form-group">
-              <label>Device Type:</label>
-              <select
-                value={newDeviceType}
-                onChange={(e) => setNewDeviceType(e.target.value)}
-              >
-                <option value="light">Light</option>
-                <option value="thermostat">Thermostat</option>
-                <option value="security_camera">Security Camera</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Device Name:</label>
-              <input
-                type="text"
-                value={newDeviceName}
-                onChange={(e) => setNewDeviceName(e.target.value)}
-                placeholder="Enter device name"
-                required
-              />
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Add Device
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowAddDevice(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+        <AddDeviceForm
+          handleAddDevice={handleAddDevice}
+          setShowAddDevice={setShowAddDevice}
+          newDevice={newDevice}
+          setNewDevice={setNewDevice}
+        />
       )}
 
       <main className="dashboard-main">
